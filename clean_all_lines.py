@@ -204,16 +204,7 @@ def clean_line(base_path, output_path, dataset_config, line_config):
     clean1_image = f"{clean1_imagename}.image"
     mask_image = f"{clean0_imagename}.mask.image"
 
-    print("\n" + "="*80)
-    print(f"Processing: {line_config['molecule']} from {dataset_config['name']}")
-    print("="*80)
-    print(f"Visibility file: {vis_file}")
-    print(f"Output prefix: {output_prefix}")
-
     # --- Step 1: Initial dirty clean (niter=0) ---
-    print("\n" + "-"*80)
-    print("STEP 1: Initial dirty clean (niter=0)")
-    print("-"*80)
 
     tclean(
         vis=vis_file,
@@ -225,20 +216,7 @@ def clean_line(base_path, output_path, dataset_config, line_config):
         **TCLEAN_COMMON_PARAMS
     )
 
-    print(f"Created dirty cube: {clean0_image}")
-
     # --- Step 2: Create Keplerian mask ---
-    print("\n" + "-"*80)
-    print("STEP 2: Creating Keplerian mask")
-    print("-"*80)
-    print(f"Mask parameters:")
-    print(f"  Stellar mass: {MASK_PARAMS['mstar']} M_sun")
-    print(f"  Inclination: {MASK_PARAMS['inc']} deg")
-    print(f"  Position angle: {MASK_PARAMS['PA']} deg")
-    print(f"  Center offset: dx0={MASK_PARAMS['dx0']}\", dy0={MASK_PARAMS['dy0']}\"")
-    print(f"  Distance: {MASK_PARAMS['dist']} pc")
-    print(f"  Systemic velocity: {MASK_PARAMS['vlsr']} m/s")
-    print(f"  Beam smoothing: {MASK_PARAMS['nbeams']} beams")
 
     make_mask(
         image=clean0_image,
@@ -246,12 +224,7 @@ def clean_line(base_path, output_path, dataset_config, line_config):
         **MASK_PARAMS
     )
 
-    print(f"Created mask: {mask_image}")
-
     # --- Step 3: Calculate RMS threshold ---
-    print("\n" + "-"*80)
-    print("STEP 3: Calculating RMS threshold")
-    print("-"*80)
 
     stats = imstat(imagename=clean0_image, chans=RMS_CHANNELS)
 
@@ -259,18 +232,10 @@ def clean_line(base_path, output_path, dataset_config, line_config):
         rms_val = stats['rms'][0]
         threshold_val = round(1000. * RMS_MULTIPLIER * rms_val, 1)
         threshold_str = f'{threshold_val}mJy'
-        print(f"RMS from channels {RMS_CHANNELS}: {rms_val*1000:.2f} mJy/beam")
-        print(f"Cleaning threshold ({RMS_MULTIPLIER}x RMS): {threshold_str}")
     else:
-        print("WARNING: Could not calculate RMS. Using default threshold of 10mJy")
         threshold_str = '10mJy'
 
     # --- Step 4: Final clean with mask ---
-    print("\n" + "-"*80)
-    print("STEP 4: Final clean with Keplerian mask")
-    print("-"*80)
-    print(f"Threshold: {threshold_str}")
-    print(f"Max iterations: {MAX_ITERATIONS}")
 
     tclean(
         vis=vis_file,
@@ -283,31 +248,19 @@ def clean_line(base_path, output_path, dataset_config, line_config):
         **TCLEAN_COMMON_PARAMS
     )
 
-    print(f"Created cleaned cube: {clean1_image}")
-
     # --- Step 5: Export to FITS ---
-    print("\n" + "-"*80)
-    print("STEP 5: Exporting to FITS")
-    print("-"*80)
 
     fits_dir = os.path.join(base_path, "aatau-alma-analysis", "fits_products")
     if not os.path.exists(fits_dir):
         os.makedirs(fits_dir)
-        print(f"Created FITS output directory: {fits_dir}")
 
     # Export cleaned image
     fits_image_name = os.path.join(fits_dir, os.path.basename(clean1_imagename) + ".fits")
     exportfits(imagename=clean1_image, fitsimage=fits_image_name, overwrite=True, dropstokes=True)
-    print(f"Exported cleaned image: {fits_image_name}")
 
     # Export mask
     fits_mask_name = os.path.join(fits_dir, os.path.basename(clean0_imagename) + ".mask.fits")
     exportfits(imagename=mask_image, fitsimage=fits_mask_name, overwrite=True, dropstokes=True)
-    print(f"Exported mask: {fits_mask_name}")
-
-    print("\n" + "="*80)
-    print(f"COMPLETED: {line_config['molecule']}")
-    print("="*80 + "\n")
 
 
 def main():
@@ -320,40 +273,13 @@ def main():
     # Create output directory if it doesn't exist
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-        print(f"Created output directory: {output_path}")
-
-    print("\n" + "="*80)
-    print("AA TAU ALMA DATA CLEANING - FINAL VERSION")
-    print("="*80)
-    print("\nParameters:")
-    print(f"  Robust: {TCLEAN_COMMON_PARAMS['robust']}")
-    print(f"  UV taper: {TCLEAN_COMMON_PARAMS['uvtaper']}")
-    print(f"  Stellar mass: {MASK_PARAMS['mstar']} M_sun")
-    print(f"  Center offset: ({MASK_PARAMS['dx0']}\", {MASK_PARAMS['dy0']}\")")
-    print(f"  RMS multiplier: {RMS_MULTIPLIER}x")
-    print("\nDatasets to process:")
-    for dataset in DATASETS:
-        print(f"  {dataset['name']}: {', '.join([line['molecule'] for line in dataset['lines']])}")
-    print()
 
     # Process all datasets and lines
-    total_lines = sum(len(dataset['lines']) for dataset in DATASETS)
-    current_line = 0
-
     for dataset in DATASETS:
         for line in dataset['lines']:
-            current_line += 1
-            print(f"\n{'#'*80}")
-            print(f"# Processing line {current_line}/{total_lines}")
-            print(f"{'#'*80}")
-
             try:
                 clean_line(base_path, output_path, dataset, line)
-            except Exception as e:
-                print(f"\n{'!'*80}")
-                print(f"ERROR processing {line['molecule']} in {dataset['name']}")
-                print(f"Error details: {e}")
-                print(f"{'!'*80}\n")
+            except Exception:
                 # Continue to next line
                 continue
 
