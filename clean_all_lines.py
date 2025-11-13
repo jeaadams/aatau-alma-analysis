@@ -296,7 +296,5 @@ def main():
 #  Execute main processing
 # ==============================================================================
 
-if __name__ == '__main__':
-    main()
-
-# For CASA execfile, the if __name__ guard is evaluated as True, so this will run
+# Run the main function
+main()
