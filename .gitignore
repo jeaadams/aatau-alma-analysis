@@ -1,0 +1,48 @@
+# CASA image files
+*.image
+*.image.*
+*.mask
+*.mask.*
+*.model
+*.model.*
+*.pb
+*.pb.*
+*.psf
+*.psf.*
+*.residual
+*.residual.*
+*.sumwt
+*.sumwt.*
+*.weight
+*.weight.*
+
+# CASA logs
+casa*.log
+ipython*.log
+*.last
+
+# FITS files (too large for git)
+*.fits
+fits_products/
+casa_images/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Directories
+*.dSYM/
